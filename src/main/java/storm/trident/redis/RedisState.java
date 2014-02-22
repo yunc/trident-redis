@@ -7,6 +7,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,7 +202,7 @@ public class RedisState<T> implements IBackingMap<T> {
 					List<String> values = jedis.mget(stringKeys);
 					for (String value : values) {
 						if (value != null) {
-							result.add((T) serializer.deserialize(value.getBytes()));
+							result.add((T) serializer.deserialize(Base64.decodeBase64(value)));
 						} else {
 							result.add(null);
 						}
@@ -246,7 +247,8 @@ public class RedisState<T> implements IBackingMap<T> {
 				String[] keyValues = new String[keys.size() * 2];
 				for (int i = 0; i < keys.size(); i++) {
 					keyValues[i * 2] = keyFactory.build(keys.get(i));
-					keyValues[i * 2 + 1] = new String(serializer.serialize(vals.get(i)));
+//					keyValues[i * 2 + 1] = new String(serializer.serialize(vals.get(i)));
+					keyValues[i * 2 + 1] = Base64.encodeBase64String(serializer.serialize(vals.get(i)));
 				}
 				
 				try {
@@ -262,7 +264,8 @@ public class RedisState<T> implements IBackingMap<T> {
 				pl.multi();
 				
 				for (int i = 0; i < keys.size(); i++) {
-					String val = new String(serializer.serialize(vals.get(i)));
+//					String val = new String(serializer.serialize(vals.get(i)));
+				  String val = Base64.encodeBase64String(serializer.serialize(vals.get(i)));
 					pl.hset(this.options.hkey, 
 							keyFactory.build(keys.get(i)), 
 							val);
